@@ -1,0 +1,5 @@
+{
+  "venvPath": "/opt/homebrew/anaconda3/envs",
+  "venv": "algo-trainer",
+  "pythonVersion": "3.11"
+}
