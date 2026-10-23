@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import String, Integer, Boolean, DateTime, ForeignKey, func
+from sqlalchemy import String, Integer, Boolean, DateTime, Float, ForeignKey, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import JSON
 from app.database import Base
@@ -49,6 +49,10 @@ class Session(Base):
     solution_space_complexity: Mapped[str | None] = mapped_column(String, nullable=True)
     is_optimal: Mapped[bool] = mapped_column(Boolean, default=False)
     confidence: Mapped[int | None] = mapped_column(Integer, nullable=True)  # 1–5
+    hidden_tests_passed: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    hidden_tests_failed: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    hidden_tests_total: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    runtime_ms: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     user: Mapped["User"] = relationship(back_populates="sessions")
 

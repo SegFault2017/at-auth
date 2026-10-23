@@ -26,6 +26,10 @@ class SessionCreate(BaseModel):
     solution_space_complexity: str | None = None
     is_optimal: bool = False
     confidence: int | None = None  # 1–5
+    hidden_tests_passed: int | None = None
+    hidden_tests_failed: int | None = None
+    hidden_tests_total: int | None = None
+    runtime_ms: float | None = None
 
 
 @router.post("/sessions", status_code=201)
@@ -53,6 +57,10 @@ async def create_session(
         solution_space_complexity=body.solution_space_complexity,
         is_optimal=body.is_optimal,
         confidence=body.confidence,
+        hidden_tests_passed=body.hidden_tests_passed,
+        hidden_tests_failed=body.hidden_tests_failed,
+        hidden_tests_total=body.hidden_tests_total,
+        runtime_ms=body.runtime_ms,
     )
     db.add(session)
     await db.commit()
