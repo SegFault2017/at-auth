@@ -14,8 +14,9 @@ solve (reads as success)
 
 **Learner**:
 The person signed in through Clerk, as `at-auth` knows them: a `users` row keyed by the
-Clerk `sub` claim.
-_Avoid_: account, customer
+Clerk `sub` claim, with the primary email as the fallback identity across a Clerk
+re-signup. `at-auth` holds no name or username; Clerk owns display identity.
+_Avoid_: account, customer, user (as a domain term; `users` is only the table)
 
 **Mastery**:
 Per-topic aggregate over a learner's completed Attempts: count, average time, average
