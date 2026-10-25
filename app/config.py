@@ -10,6 +10,7 @@ class Settings(BaseSettings):
 
     database_url: str = "sqlite+aiosqlite:///./at_user.db"
     clerk_jwks_url: str = ""
+    cors_origins: list[str] = ["http://localhost:3000"]
 
 
 @lru_cache

@@ -1,11 +1,10 @@
 import uuid
-from app.models import User, Session, ProblemSet
+from app.models import User, Attempt
 
 
 async def test_user_create(db):
     user = User(
         provider_id="clerk_123",
-        username="alice",
         email="alice@example.com",
     )
     db.add(user)
@@ -15,22 +14,28 @@ async def test_user_create(db):
     assert user.provider == "clerk"
 
 
-async def test_session_create(db):
-    user = User(provider_id="clerk_456", username="bob", email="bob@example.com")
+async def test_attempt_create(db):
+    user = User(provider_id="clerk_456", email="bob@example.com")
     db.add(user)
     await db.commit()
 
     from datetime import datetime, timezone
-    s = Session(
+    now = datetime.now(timezone.utc)
+    a = Attempt(
         user_id=user.id,
         slug="two-sum",
         mode="free",
         topic_tags=["Array", "Hash Table"],
-        started_at=datetime.now(timezone.utc),
-        time_taken_seconds=600,
+        started_at=now,
+        submitted_at=now,
+        verdict="accepted",
+        passed=3,
+        failed=0,
+        total=3,
     )
-    db.add(s)
+    db.add(a)
     await db.commit()
-    await db.refresh(s)
-    assert s.topic_tags == ["Array", "Hash Table"]
-    assert s.hints_used == 0
+    await db.refresh(a)
+    assert a.topic_tags == ["Array", "Hash Table"]
+    assert a.hints_used == 0
+    assert a.submit_index == 1
