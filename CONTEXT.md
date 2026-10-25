@@ -6,9 +6,9 @@ stores who the learner is and what they have attempted.
 ## Language
 
 **Attempt**:
-One learner, one problem, one timed try, with its outcome and the hints used. Shared with
-the frontend; defined in the container's `CONTEXT-MAP.md`. Stored in the table still
-named `sessions`.
+One learner, one problem, one Submit: the time from opening the problem to that Submit,
+its verdict, and the hints used by then. A failed Submit is an Attempt; Run is not.
+Shared with the frontend; defined in the container's `CONTEXT-MAP.md`.
 _Avoid_: session (taken by the Clerk login session and the `leetcode_session` cookie),
 solve (reads as success)
 
