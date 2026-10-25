@@ -1,13 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from app.auth.backend import UserIdentity
-from app.auth.dependencies import get_auth_backend
 from app.models import User, Attempt
-from app.main import app
-
-
-class MockAuth:
-    async def verify_token(self, token: str) -> UserIdentity:
-        return UserIdentity(provider_id="clerk_001", email="u@example.com")
 
 
 T0 = datetime(2026, 3, 1, 10, 0, tzinfo=timezone.utc)
@@ -42,9 +34,9 @@ async def _setup(db):
     await db.commit()
 
 
-async def test_mastery_over_new_formula(client, db):
+async def test_mastery_over_new_formula(client, db, auth_as):
     await _setup(db)
-    app.dependency_overrides[get_auth_backend] = lambda: MockAuth()
+    auth_as()
     resp = await client.get("/users/me/mastery", headers={"Authorization": "Bearer tok"})
     assert resp.status_code == 200
     data = resp.json()
@@ -67,12 +59,10 @@ async def test_mastery_over_new_formula(client, db):
     assert graph["last_solved_at"] is None
 
     assert data[0]["topic"] == "Graph"
-    app.dependency_overrides.pop(get_auth_backend, None)
 
 
-async def test_mastery_empty_for_new_user(client, db):
-    app.dependency_overrides[get_auth_backend] = lambda: MockAuth()
+async def test_mastery_empty_for_new_user(client, db, auth_as):
+    auth_as()
     resp = await client.get("/users/me/mastery", headers={"Authorization": "Bearer tok"})
     assert resp.status_code == 200
     assert resp.json() == []
-    app.dependency_overrides.pop(get_auth_backend, None)

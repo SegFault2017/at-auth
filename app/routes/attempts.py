@@ -3,7 +3,8 @@ from datetime import datetime
 from typing import Literal
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from pydantic import BaseModel, Field, model_validator
+from sqlalchemy import select
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from app.auth.dependencies import get_current_user
 from app.database import get_db
 from app.models import User, Attempt
@@ -18,7 +19,6 @@ class CategoryCount(BaseModel):
 
 class AttemptCreate(BaseModel):
     slug: str
-    mode: Literal["free", "problem_set"] = "free"
     topic_tags: list[str] = []
     problem_set_id: uuid.UUID | None = None
     started_at: datetime
@@ -40,14 +40,38 @@ class AttemptCreate(BaseModel):
         return self
 
 
+class AttemptOut(AttemptCreate):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    mode: Literal["free", "problem_set"]
+
+
 @router.post("/attempts", status_code=201)
 async def create_attempt(
     body: AttemptCreate,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    attempt = Attempt(user_id=user.id, **body.model_dump())
+    attempt = Attempt(
+        user_id=user.id,
+        mode="problem_set" if body.problem_set_id else "free",
+        **body.model_dump(),
+    )
     db.add(attempt)
     await db.commit()
     await db.refresh(attempt)
     return {"id": str(attempt.id)}
+
+
+@router.get("/users/me/attempts", response_model=list[AttemptOut])
+async def get_my_attempts(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Attempt)
+        .where(Attempt.user_id == user.id)
+        .order_by(Attempt.submitted_at.desc())
+    )
+    return result.scalars().all()

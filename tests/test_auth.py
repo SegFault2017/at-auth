@@ -1,90 +1,61 @@
 from sqlalchemy import select
-from app.auth.backend import UserIdentity
-from app.auth.dependencies import get_auth_backend
 from app.models import User
-from app.main import app
 
-
-class MockAuthBackend:
-    def __init__(self, provider_id="clerk_abc", email="test@example.com"):
-        self.identity = UserIdentity(provider_id=provider_id, email=email)
-
-    async def verify_token(self, token: str) -> UserIdentity:
-        if token == "valid":
-            return self.identity
-        raise ValueError("bad token")
-
-
-def override(backend):
-    app.dependency_overrides[get_auth_backend] = lambda: backend
-
-
-def clear():
-    app.dependency_overrides.pop(get_auth_backend, None)
+AUTH = {"Authorization": "Bearer tok"}
 
 
 async def _users(db) -> list[User]:
     return list((await db.execute(select(User))).scalars().all())
 
 
-async def test_first_request_creates_user(client, db):
-    override(MockAuthBackend())
-    resp = await client.get("/users/me", headers={"Authorization": "Bearer valid"})
+async def test_first_request_creates_user(client, db, auth_as):
+    auth_as()
+    resp = await client.get("/users/me", headers=AUTH)
     assert resp.status_code == 200
-    assert resp.json()["email"] == "test@example.com"
+    assert resp.json()["email"] == "u@example.com"
     users = await _users(db)
-    assert [(u.provider_id, u.email) for u in users] == [("clerk_abc", "test@example.com")]
-    clear()
+    assert [(u.provider_id, u.email) for u in users] == [("clerk_001", "u@example.com")]
 
 
-async def test_existing_user_found_by_subject(client, db):
-    db.add(User(provider_id="clerk_abc", email="test@example.com"))
+async def test_existing_user_found_by_subject(client, db, auth_as):
+    db.add(User(provider_id="clerk_001", email="u@example.com"))
     await db.commit()
-    override(MockAuthBackend())
-    resp = await client.get("/users/me", headers={"Authorization": "Bearer valid"})
+    auth_as()
+    resp = await client.get("/users/me", headers=AUTH)
     assert resp.status_code == 200
     assert len(await _users(db)) == 1
-    clear()
 
 
-async def test_resignup_rekeys_by_email(client, db):
-    old = User(provider_id="clerk_old", email="test@example.com")
+async def test_resignup_rekeys_by_email(client, db, auth_as):
+    old = User(provider_id="clerk_old", email="u@example.com")
     db.add(old)
     await db.commit()
     old_id = old.id
-    override(MockAuthBackend(provider_id="clerk_new"))
-    resp = await client.get("/users/me", headers={"Authorization": "Bearer valid"})
+    auth_as(provider_id="clerk_new")
+    resp = await client.get("/users/me", headers=AUTH)
     assert resp.status_code == 200
     assert resp.json()["id"] == str(old_id)
     users = await _users(db)
     assert [(u.id, u.provider_id) for u in users] == [(old_id, "clerk_new")]
-    clear()
 
 
-async def test_token_without_email_returns_401(client, db):
-    override(MockAuthBackend(email=""))
-    resp = await client.get("/users/me", headers={"Authorization": "Bearer valid"})
+async def test_token_without_email_returns_401(client, db, auth_as):
+    auth_as(email="")
+    resp = await client.get("/users/me", headers=AUTH)
     assert resp.status_code == 401
     assert await _users(db) == []
-    clear()
 
 
-async def test_invalid_token_returns_401(client, db):
-    override(MockAuthBackend())
+async def test_invalid_token_returns_401(client, auth_as):
+    auth_as()
     resp = await client.get("/users/me", headers={"Authorization": "Bearer bad"})
     assert resp.status_code == 401
-    clear()
 
 
-async def test_auth_sync_removed(client):
-    override(MockAuthBackend())
-    resp = await client.post(
-        "/auth/sync",
-        json={"email": "test@example.com"},
-        headers={"Authorization": "Bearer valid"},
-    )
+async def test_auth_sync_removed(client, auth_as):
+    auth_as()
+    resp = await client.post("/auth/sync", json={"email": "u@example.com"}, headers=AUTH)
     assert resp.status_code == 404
-    clear()
 
 
 async def test_cors_allows_frontend_origin(client):
