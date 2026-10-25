@@ -11,7 +11,6 @@ router = APIRouter(prefix="/problemsets", tags=["problemsets"])
 
 
 class ProblemSetCreate(BaseModel):
-    user_id: str
     mode: str  # "interview_sim" | "drill"
     problems: list[dict]  # [{slug, time_limit_seconds}]
 
@@ -23,14 +22,14 @@ async def create_problem_set(
     user: User = Depends(get_current_user),
 ):
     ps = ProblemSet(
-        user_id=uuid.UUID(body.user_id),
+        user_id=user.id,
         mode=body.mode,
         problems=body.problems,
     )
     db.add(ps)
     await db.commit()
     await db.refresh(ps)
-    return {"id": str(ps.id), "mode": ps.mode, "status": ps.status, "problems": ps.problems}
+    return {"id": str(ps.id), "mode": ps.mode, "problems": ps.problems}
 
 
 @router.get("/{problem_set_id}")
@@ -48,7 +47,7 @@ async def get_problem_set(
     ps = result.scalar_one_or_none()
     if not ps:
         raise HTTPException(status_code=404, detail="Problem set not found")
-    return {"id": str(ps.id), "mode": ps.mode, "status": ps.status, "problems": ps.problems}
+    return {"id": str(ps.id), "mode": ps.mode, "problems": ps.problems}
 
 
 @router.get("")
@@ -66,7 +65,6 @@ async def list_problem_sets(
         {
             "id": str(ps.id),
             "mode": ps.mode,
-            "status": ps.status,
             "problems": ps.problems,
             "generated_at": ps.generated_at.isoformat(),
         }

@@ -19,8 +19,9 @@ re-signup. `at-auth` holds no name or username; Clerk owns display identity.
 _Avoid_: account, customer, user (as a domain term; `users` is only the table)
 
 **Mastery**:
-Per-topic aggregate over a learner's completed Attempts: count, average time, average
-hints, clean-solve rate, last solved.
+Per-topic aggregate over all of a learner's Attempts, failed ones included. It counts the
+Attempts and gives the clean-solve rate, the share of first Submits accepted with no hints.
+Average time, average hints and last solved count accepted Attempts only.
 _Avoid_: progress, stats
 
 **Problem Set**:
