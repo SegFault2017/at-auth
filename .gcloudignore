@@ -1,0 +1,15 @@
+# Files that `gcloud run deploy --source .` must not upload to Cloud Build.
+# Secrets live in Secret Manager, not in the source bundle.
+.env
+.env.*
+!.env.example
+*.db
+.neon
+
+.git
+.gitignore
+.venv
+venv
+__pycache__/
+*.pyc
+.pytest_cache/

@@ -1,0 +1,14 @@
+# Secrets and local data never go into the image
+.env
+.env.*
+!.env.example
+*.db
+.neon
+
+.git
+.venv
+venv
+__pycache__
+*.pyc
+.pytest_cache
+tests
