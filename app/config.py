@@ -6,7 +6,8 @@ _ENV_FILE = Path(__file__).resolve().parent.parent / ".env"
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=_ENV_FILE, env_file_encoding="utf-8")
+    # extra="ignore": `neon env pull` writes keys this service doesn't use (NEON_BRANCH, ...)
+    model_config = SettingsConfigDict(env_file=_ENV_FILE, env_file_encoding="utf-8", extra="ignore")
 
     database_url: str = "sqlite+aiosqlite:///./at_user.db"
     clerk_jwks_url: str = ""
